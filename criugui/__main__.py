@@ -16,8 +16,31 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from gi.repository import Gtk
+from criugui.cgtreeview import CGTreeView
+
+testdata = {"name": "systemd", "pid": "1", "children": [
+            {"name": "atom", "pid": "1234", "children": []},
+            {"name": "gedit", "pid": "5678", "children": []},
+            {"name": "firefox", "pid": "9012", "children": []},
+            {"name": "system.slice", "children": [
+             {"name": "avahi-daemon.service", "children": [
+              {"name": "avahi-daemon", "pid": "912", "children": []},
+              {"name": "avahi-daemon", "pid": "931", "children": []}]},
+             {"name": "dbus.service", "children": [
+              {"name": "dbus-daemon", "pid": "914", "children": []}]}]}]}
+
+
+headerbar = Gtk.HeaderBar()
+headerbar.set_title("CRIUGUI")
+headerbar.set_show_close_button(True)
+
+cgtreeview = CGTreeView()
+cgtreeview.set_cg_data(testdata)
 
 win = Gtk.Window()
 win.connect("delete-event", Gtk.main_quit)
+win.set_titlebar(headerbar)
+win.set_size_request(800, 600)
+win.add(cgtreeview)
 win.show_all()
 Gtk.main()
