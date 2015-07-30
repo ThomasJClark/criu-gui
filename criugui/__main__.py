@@ -30,17 +30,21 @@ testdata = {"name": "systemd", "pid": "1", "children": [
               {"name": "dbus-daemon", "pid": "914", "children": []}]}]}]}
 
 
-headerbar = Gtk.HeaderBar()
-headerbar.set_title("CRIUGUI")
-headerbar.set_show_close_button(True)
+def main():
+    headerbar = Gtk.HeaderBar()
+    headerbar.set_title("CRIUGUI")
+    headerbar.set_show_close_button(True)
 
-cgtreeview = CGTreeView()
-cgtreeview.set_cg_data(testdata)
+    cgtreeview = CGTreeView()
+    cgtreeview.set_cg_data(testdata)
 
-win = Gtk.Window()
-win.connect("delete-event", Gtk.main_quit)
-win.set_titlebar(headerbar)
-win.set_size_request(800, 600)
-win.add(cgtreeview)
-win.show_all()
-Gtk.main()
+    win = Gtk.Window()
+    win.connect("delete-event", Gtk.main_quit)
+    win.set_titlebar(headerbar)
+    win.set_size_request(800, 600)
+    win.add(cgtreeview)
+    win.show_all()
+    Gtk.main()
+
+if __name__ == "__main__":
+    main()

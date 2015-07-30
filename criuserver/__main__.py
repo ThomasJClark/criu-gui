@@ -17,5 +17,10 @@
 
 from criuserver.cgtree import CGTree
 
-tree = CGTree("/sys/fs/cgroup/systemd")
-print(tree.dumps())
+
+def main():
+    tree = CGTree("/sys/fs/cgroup/systemd")
+    print(tree.dumps())
+
+if __name__ == "__main__":
+    main()
