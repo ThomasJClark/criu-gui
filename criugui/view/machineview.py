@@ -19,7 +19,7 @@ from gi.repository import Gtk
 from criugui.view.cgtreeview import CGTreeView
 
 
-class MachineView(Gtk.Grid):
+class MachineView(Gtk.Notebook):
 
     """
         A Gtk widget that contains a CGTreeView, as well as a title that shows the machine's
@@ -27,11 +27,11 @@ class MachineView(Gtk.Grid):
     """
 
     def __init__(self, machine):
-        Gtk.Grid.__init__(self)
+        Gtk.Notebook.__init__(self)
 
         self.machine = machine
 
-        self.header = Gtk.HeaderBar()
+        self.header = Gtk.Label()
         self.treeview = CGTreeView()
 
         scrolledwin = Gtk.ScrolledWindow()
@@ -41,15 +41,17 @@ class MachineView(Gtk.Grid):
         sep = Gtk.Separator()
         sep.set_orientation(Gtk.Orientation.VERTICAL)
 
-        self.attach(self.header, 0, 0, 2, 1)
-        self.attach(scrolledwin, 0, 1, 1, 1)
-        self.attach(sep, 1, 1, 1, 1)
+        box = Gtk.Box(Gtk.Orientation.HORIZONTAL)
+        box.add(scrolledwin)
+        box.add(sep)
+
+        self.append_page(box, self.header)
 
         self.update()
 
     def update(self):
         """Update the view with the latest data in self.machine."""
-        self.header.set_title(self.machine.hostname)
+        self.header.set_markup("<b>%s</b>" % self.machine.hostname)
 
         self.treeview.cgtree = self.machine.cgtree
         self.treeview.update()
