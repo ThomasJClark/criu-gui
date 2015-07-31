@@ -15,12 +15,17 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import web
 from criuserver.cgtree import CGTree
+
+urls = (
+    "/cgtree", "CGTree"
+)
 
 
 def main():
-    tree = CGTree("/sys/fs/cgroup/systemd")
-    print(tree.dumps())
+    app = web.application(urls, globals())
+    app.run()
 
 if __name__ == "__main__":
     main()

@@ -15,17 +15,20 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import web
 import os
 import json
+
+CONTROL_GROUPS_PATH = "/sys/fs/cgroup/systemd"
 
 
 class CGTree:
 
-    def __init__(self, path):
-        self.tree = self.__parse_cgroups(path)
+    def GET(self):
+        tree = self.__parse_cgroups(CONTROL_GROUPS_PATH)
 
-    def dumps(self):
-        return json.dumps(self.tree)
+        web.header("Content-Type", "application/json")
+        return json.dumps(tree)
 
     def __parse_proc(self, pid):
         """

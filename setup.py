@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 from setuptools import setup
 
 setup(name="criugui",
@@ -6,6 +6,7 @@ setup(name="criugui",
       description="Graphical process migration tool",
       author="Tom Clark",
       author_email="tclark@redhat.com",
+      install_requires=["web.py"],
       packages=["criugui", "criugui.view", "criuserver"],
       entry_points={
           "gui_scripts": ["criugui = criugui.__main__:main"],
