@@ -29,6 +29,8 @@ class CGTreeView(Gtk.TreeView):
     def __init__(self):
         Gtk.TreeView.__init__(self, Gtk.TreeStore(str, str, Pango.Weight))
 
+        self.cgtree = None
+
         text = Gtk.CellRendererText()
 
         namecol = Gtk.TreeViewColumn("Name", text, text=0)
@@ -41,19 +43,22 @@ class CGTreeView(Gtk.TreeView):
 
         self.set_search_column(0)
 
-    def set_cg_data(self, cg_data):
+    def update(self):
         """
-            Recursively add the process tree to the treestore.  cg_data is a dictionary with the
+            Recursively add the process tree to the treestore.  cgtree is a dictionary with the
             keys "name", "children", and possibly "pid".  "children" maps to an array of dicts
             similar to data, and "pid" is specified only if the data refers to a process and not a
             cgroup.
         """
 
         self.get_model().clear()
-        self.__append_cg_data(cg_data)
+        self.__append_cg_data(self.cgtree)
         self.expand_all()
 
     def __append_cg_data(self, data, parent=None):
+        if data is None:
+            return
+
         # The entry may be a cgroup or a process - we can tell by checking for a "pid" key.
         if "pid" in data:
             row = (data["name"], data["pid"], Pango.Weight.NORMAL)

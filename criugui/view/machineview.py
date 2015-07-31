@@ -26,8 +26,10 @@ class MachineView(Gtk.Grid):
         hostname, and a few other widgets for scrollbars and such.
     """
 
-    def __init__(self):
+    def __init__(self, machine):
         Gtk.Grid.__init__(self)
+
+        self.machine = machine
 
         self.header = Gtk.HeaderBar()
         self.treeview = CGTreeView()
@@ -42,3 +44,12 @@ class MachineView(Gtk.Grid):
         self.attach(self.header, 0, 0, 2, 1)
         self.attach(scrolledwin, 0, 1, 1, 1)
         self.attach(sep, 1, 1, 1, 1)
+
+        self.update()
+
+    def update(self):
+        """Update the view with the latest data in self.machine."""
+        self.header.set_title(self.machine.hostname)
+
+        self.treeview.cgtree = self.machine.cgtree
+        self.treeview.update()
