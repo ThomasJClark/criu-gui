@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from gi.repository import Gtk
+from gi.repository import Gio
 from criugui.view.machineview import MachineView
 from criugui.machine import Machine
 
@@ -52,9 +53,17 @@ machine3 = Machine("utx",
 
 
 def main():
+    icontheme = Gtk.IconTheme.get_default()
+
     headerbar = Gtk.HeaderBar()
     headerbar.set_title("CRIUGUI")
     headerbar.set_show_close_button(True)
+
+    addbutton = Gtk.Button.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON)
+    headerbar.pack_start(addbutton)
+
+    searchbutton = Gtk.Button.new_from_icon_name("system-search-symbolic", Gtk.IconSize.BUTTON)
+    headerbar.pack_start(searchbutton)
 
     box = Gtk.HBox()
 
@@ -63,6 +72,7 @@ def main():
 
     win = Gtk.Window()
     win.connect("delete-event", Gtk.main_quit)
+    win.set_icon_name("utilities-system-monitor")
     win.set_titlebar(headerbar)
     win.set_default_size(1000, 800)
     win.add(box)
