@@ -16,7 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from gi.repository import Gtk
-from criugui.machineview import MachineView
+from criugui.view.machineview import MachineView
 
 # Sample control group data, until the server is finished
 cgdata1 = {"name": "systemd", "pid": "1", "children": [

@@ -1,4 +1,4 @@
-# criugui - cgtreeview.py
+# criugui - machineview.py
 # Copyright (C) 2015 Red Iat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from gi.repository import Gtk
-from criugui.cgtreeview import CGTreeView
+from criugui.view.cgtreeview import CGTreeView
 
 
 class MachineView(Gtk.Grid):
