@@ -16,18 +16,36 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from gi.repository import Gtk
-from criugui.cgtreeview import CGTreeView
+from criugui.machineview import MachineView
 
-testdata = {"name": "systemd", "pid": "1", "children": [
-            {"name": "atom", "pid": "1234", "children": []},
-            {"name": "gedit", "pid": "5678", "children": []},
-            {"name": "firefox", "pid": "9012", "children": []},
-            {"name": "system.slice", "children": [
-             {"name": "avahi-daemon.service", "children": [
-              {"name": "avahi-daemon", "pid": "912", "children": []},
-              {"name": "avahi-daemon", "pid": "931", "children": []}]},
-             {"name": "dbus.service", "children": [
-              {"name": "dbus-daemon", "pid": "914", "children": []}]}]}]}
+# Sample control group data, until the server is finished
+cgdata1 = {"name": "systemd", "pid": "1", "children": [
+           {"name": "atom", "pid": "1234", "children": []},
+           {"name": "gedit", "pid": "5678", "children": []},
+           {"name": "firefox", "pid": "9012", "children": []},
+           {"name": "system.slice", "children": [
+            {"name": "avahi-daemon.service", "children": [
+             {"name": "avahi-daemon", "pid": "912", "children": []},
+             {"name": "avahi-daemon", "pid": "931", "children": []}]},
+            {"name": "dbus.service", "children": [
+             {"name": "dbus-daemon", "pid": "914", "children": []}]}]}]}
+
+cgdata2 = {"name": "sssd.service", "children": [
+           {"name": "sssd", "pid": "17523",  "children": [
+            {"name": "sssd_be", "pid": "17524", "children": []},
+            {"name": "sssd_nss", "pid": "17541", "children": []},
+            {"name": "sssd_pam",     "pid": "17542", "children": []}]}]}
+
+cgdata3 = {"name": "gdm-wayland-ses", "pid": "1454",
+           "children": [
+               {"name": "dbus-daemon", "pid": "1458", "children": []},
+               {"name": "gnome-session", "pid": "1471", "children": [
+                {"name": "gnome-shell", "pid": "1481", "children": [
+                 {"name": "Xwayland", "pid": "1531", "children": []},
+                 {"name": "ibus-daemon", "pid": "1693", "children": [
+                  {"name": "ibus-dconf", "pid": "1697", "children": []},
+                  {"name": "ibus-engine-sim", "pid": "1875", "children": []}]}]},
+                {"name": "gnome-settings-", "pid": "1713", "children": []}]}]}
 
 
 def main():
@@ -35,14 +53,20 @@ def main():
     headerbar.set_title("CRIUGUI")
     headerbar.set_show_close_button(True)
 
-    cgtreeview = CGTreeView()
-    cgtreeview.set_cg_data(testdata)
+    box = Gtk.HBox()
+
+    for hostname, data in (("localhost", cgdata1), ("nuc", cgdata2), ("utx", cgdata3)):
+        machineview = MachineView()
+        machineview.header.set_title(hostname)
+        machineview.header.set_subtitle("127.0.0.1")
+        machineview.treeview.set_cg_data(data)
+        box.pack_start(machineview, True, True, 0)
 
     win = Gtk.Window()
     win.connect("delete-event", Gtk.main_quit)
     win.set_titlebar(headerbar)
-    win.set_size_request(800, 600)
-    win.add(cgtreeview)
+    win.set_default_size(1000, 800)
+    win.add(box)
     win.show_all()
     Gtk.main()
 
