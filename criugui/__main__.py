@@ -15,44 +15,34 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from gi.repository import Gtk
-from gi.repository import Gio
+import threading
+from gi.repository import Gtk, GObject, GLib
 from criugui.view.machineview import MachineView
 from criugui.machine import Machine
 
-# Sample control group data, until the server is finished
-machine1 = Machine("localhost",
-                   {"name": "systemd", "pid": "1", "children": [
-                    {"name": "atom", "pid": "1234", "children": []},
-                    {"name": "gedit", "pid": "5678", "children": []},
-                    {"name": "firefox", "pid": "9012", "children": []},
-                    {"name": "system.slice", "children": [
-                     {"name": "avahi-daemon.service", "children": [
-                      {"name": "avahi-daemon", "pid": "912", "children": []},
-                      {"name": "avahi-daemon", "pid": "931", "children": []}]},
-                     {"name": "dbus.service", "children": [
-                      {"name": "dbus-daemon", "pid": "914", "children": []}]}]}]})
+machineviews = [
+    MachineView(Machine("localhost")),
+    MachineView(Machine("127.0.0.1")),
+    MachineView(Machine("0.0.0.0")),
+]
 
-machine2 = Machine("nuc",
-                   {"name": "sssd.service", "children": [
-                    {"name": "sssd", "pid": "17523",  "children": [
-                     {"name": "sssd_be", "pid": "17524", "children": []},
-                     {"name": "sssd_nss", "pid": "17541", "children": []},
-                     {"name": "sssd_pam",     "pid": "17542", "children": []}]}]})
 
-machine3 = Machine("utx",
-                   {"name": "gdm-wayland-ses", "pid": "1454", "children": [
-                    {"name": "dbus-daemon", "pid": "1458", "children": []},
-                    {"name": "gnome-session", "pid": "1471", "children": [
-                     {"name": "gnome-shell", "pid": "1481", "children": [
-                      {"name": "Xwayland", "pid": "1531", "children": []},
-                      {"name": "ibus-daemon", "pid": "1693", "children": [
-                       {"name": "ibus-dconf", "pid": "1697", "children": []},
-                       {"name": "ibus-engine-sim", "pid": "1875", "children": []}]}]},
-                     {"name": "gnome-settings-", "pid": "1713", "children": []}]}]})
+def refresh_machines(*_):
+    """Reload each Machine in a new thread, then update the views."""
+
+    def refresh_machine_view(view):
+        view.machine.refresh()
+        GLib.idle_add(view.update)
+
+    for view in machineviews:
+        thread = threading.Thread(target=refresh_machine_view, kwargs={"view": view})
+        thread.daemon = True
+        thread.start()
 
 
 def main():
+    GObject.threads_init()
+
     icontheme = Gtk.IconTheme.get_default()
 
     headerbar = Gtk.HeaderBar()
@@ -62,13 +52,16 @@ def main():
     addbutton = Gtk.Button.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON)
     headerbar.pack_start(addbutton)
 
+    refreshbutton = Gtk.Button.new_from_icon_name("view-refresh-symbolic", Gtk.IconSize.BUTTON)
+    refreshbutton.connect("clicked", refresh_machines)
+    headerbar.pack_start(refreshbutton)
+
     searchbutton = Gtk.Button.new_from_icon_name("system-search-symbolic", Gtk.IconSize.BUTTON)
     headerbar.pack_start(searchbutton)
 
     box = Gtk.HBox()
-
-    for machine in (machine1, machine2, machine3):
-        box.pack_start(MachineView(machine), True, True, 0)
+    for view in machineviews:
+        box.pack_start(view, True, True, 0)
 
     win = Gtk.Window()
     win.connect("delete-event", Gtk.main_quit)
