@@ -35,7 +35,7 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
                                        default_width=1000,
                                        default_height=800)
 
-        self.box = Gtk.HBox()
+        self.box = Gtk.HBox(homogeneous=True)
         self.add(
             Gtk.Label(
                 "<b>You don't have any machines added.</b>\n" +
