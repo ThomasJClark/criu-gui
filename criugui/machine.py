@@ -31,6 +31,7 @@ class Machine:
     def __init__(self, hostname, cgtree=None):
         self.hostname = hostname
         self.cgtree = cgtree
+        self.error_text = None
 
     def refresh(self):
         """
@@ -39,8 +40,15 @@ class Machine:
             from the main GUI thread.
         """
 
-        conn = httplib.HTTPConnection(self.hostname, CRIUGUI_PORT)
-        conn.request("GET", "/cgtree")
+        self.error_text = None
 
-        resp = conn.getresponse().read()
-        self.cgtree = json.loads(resp)
+        try:
+            conn = httplib.HTTPConnection(self.hostname, CRIUGUI_PORT)
+            conn.request("GET", "/cgtree")
+
+            resp = conn.getresponse().read()
+            self.cgtree = json.loads(resp)
+        except EnvironmentError as e:
+            self.error_text = "%s: %s" % (self.hostname, e.strerror)
+        except Exception as e:
+            self.error_text = "%s: %s" % (self.hostname, str(e))

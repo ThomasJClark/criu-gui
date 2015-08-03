@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from gi.repository import Gtk
+from gi.repository import Gtk, GLib
 from criugui.view.cgtreeview import CGTreeView
 
 
@@ -41,17 +41,29 @@ class MachineView(Gtk.Notebook):
         sep = Gtk.Separator()
         sep.set_orientation(Gtk.Orientation.VERTICAL)
 
-        box = Gtk.Box(Gtk.Orientation.HORIZONTAL)
-        box.add(scrolledwin)
-        box.add(sep)
-
-        self.append_page(box, self.header)
+        self.grid = Gtk.Grid()
+        self.grid.attach(scrolledwin, 0, 0, 1, 1)
+        self.grid.attach(sep, 1, 0, 1, 2)
+        self.append_page(self.grid, self.header)
 
         self.update()
 
     def update(self):
         """Update the view with the latest data in self.machine."""
-        self.header.set_markup("<b>%s</b>" % self.machine.hostname)
+
+        self.header.set_markup("<b>%s</b>" % GLib.markup_escape_text(self.machine.hostname))
+
+        # If an error occured while loading the process data, add an infobar containing the error
+        # message.
+        if self.machine.error_text:
+            def close_infobar(infobar, response):
+                infobar.destroy()
+
+            infobar = Gtk.InfoBar(message_type=Gtk.MessageType.ERROR, show_close_button=True)
+            infobar.connect("response", close_infobar)
+            infobar.get_content_area().add(Gtk.Label(self.machine.error_text))
+            self.grid.attach(infobar, 0, 1, 1, 1)
 
         self.treeview.cgtree = self.machine.cgtree
         self.treeview.update()
+        self.show_all()
