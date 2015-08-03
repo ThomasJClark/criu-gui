@@ -32,9 +32,11 @@ class Machine:
         stored as a nested dict of control groups and processes.
     """
 
-    def __init__(self, hostname, cgtree=None):
+    def __init__(self, hostname, username, password):
         self.hostname = hostname
-        self.cgtree = cgtree
+        self.username = username
+        self.password = password
+        self.cgtree = None
         self.error_text = None
 
     def refresh(self):

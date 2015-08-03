@@ -70,8 +70,9 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
 
         def add_machine_done(dialog, response):
             if response == Gtk.ResponseType.OK:
-                machine = Machine(dialog.entry.get_text())
-                view = MachineView(machine)
+                machine = Machine(dialog.get_hostname(),
+                                  dialog.get_username(),
+                                  dialog.get_password())
 
                 # If the window still has the "no machines added" label, remove it and add the
                 # main container box.
@@ -79,7 +80,7 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
                     self.remove(self.get_child())
                     self.add(self.box)
 
-                self.box.pack_start(view, True, True, 0)
+                self.box.pack_start(MachineView(machine), True, True, 0)
                 self.box.show_all()
 
                 self.refresh_machines()
