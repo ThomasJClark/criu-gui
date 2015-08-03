@@ -15,7 +15,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import httplib
+try:
+    import httplib
+except ImportError:
+    import http.client as httplib  # For Python 3 compatibility
+
 import json
 
 CRIUGUI_PORT = 8080
@@ -47,7 +51,7 @@ class Machine:
             conn.request("GET", "/cgtree")
 
             resp = conn.getresponse().read()
-            self.cgtree = json.loads(resp)
+            self.cgtree = json.loads(resp.decode("utf-8"))
         except EnvironmentError as e:
             self.error_text = "%s: %s" % (self.hostname, e.strerror)
         except Exception as e:
