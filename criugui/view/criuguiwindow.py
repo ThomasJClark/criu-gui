@@ -36,7 +36,12 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
                                        default_height=800)
 
         self.box = Gtk.HBox()
-        self.add(self.box)
+        self.add(
+            Gtk.Label(
+                "<b>You don't have any machines added.</b>\n" +
+                "Click the \"+\" button to add one.",
+                use_markup=True,
+                justify=Gtk.Justification.CENTER))
 
         headerbar = Gtk.HeaderBar()
         headerbar.set_title("CRIUGUI")
@@ -67,6 +72,12 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
             if response == Gtk.ResponseType.OK:
                 machine = Machine(dialog.entry.get_text())
                 view = MachineView(machine)
+
+                # If the window still has the "no machines added" label, remove it and add the
+                # main container box.
+                if self.get_child() != self.box:
+                    self.remove(self.get_child())
+                    self.add(self.box)
 
                 self.box.pack_start(view, True, True, 0)
                 self.box.show_all()
