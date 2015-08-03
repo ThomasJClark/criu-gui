@@ -69,6 +69,6 @@ class MachineView(Gtk.Notebook):
 
             infobar.get_content_area().get_children()[0].set_text(self.machine.error_text)
 
-        self.treeview.cgtree = self.machine.cgtree
+        self.treeview.cgtree = self.machine.get_cgtree()
         self.treeview.update()
         self.show_all()

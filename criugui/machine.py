@@ -22,6 +22,7 @@ except ImportError:
 
 import json
 import paramiko
+from criugui.remote.cgtree import CGTree
 
 CRIUGUI_PORT = 8080
 
@@ -58,14 +59,19 @@ class Machine:
                                         username=self.username,
                                         password=self.password)
 
-            conn = httplib.HTTPConnection(self.hostname, CRIUGUI_PORT)
-            conn.request("GET", "/cgtree")
-
-            resp = conn.getresponse().read()
-            self.cgtree = json.loads(resp.decode("utf-8"))
+            with self.ssh_client.open_sftp() as sftp_client:
+                self.cgtree = CGTree(sftp_client).tree
         except EnvironmentError as e:
             self.ssh_client = None
             self.error_text = "%s: %s" % (self.hostname, e.strerror)
         except Exception as e:
             self.ssh_client = None
             self.error_text = "%s: %s" % (self.hostname, str(e))
+
+    def get_cgtree(self):
+        """
+            Return a dict with a tree of control groups and process on the remote machine
+            (see criugui.remote.cgtree).
+        """
+
+        return self.cgtree

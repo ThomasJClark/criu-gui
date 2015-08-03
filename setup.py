@@ -7,8 +7,7 @@ setup(name="criugui",
       author="Tom Clark",
       author_email="tclark@redhat.com",
       install_requires=["web.py"],
-      packages=["criugui", "criugui.view", "criuserver"],
+      packages=["criugui", "criugui.view", "criugui.remote"],
       entry_points={
           "gui_scripts": ["criugui = criugui.__main__:main"],
-          "console_scripts": ["criuserver = criuserver.__main__:main"]
       })
