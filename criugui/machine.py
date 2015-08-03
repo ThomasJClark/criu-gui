@@ -21,6 +21,7 @@ except ImportError:
     import http.client as httplib  # For Python 3 compatibility
 
 import json
+import paramiko
 
 CRIUGUI_PORT = 8080
 
@@ -36,6 +37,7 @@ class Machine:
         self.hostname = hostname
         self.username = username
         self.password = password
+        self.ssh_client = None
         self.cgtree = None
         self.error_text = None
 
@@ -49,12 +51,21 @@ class Machine:
         self.error_text = None
 
         try:
+            if self.ssh_client is None:
+                self.ssh_client = paramiko.SSHClient()
+                self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                self.ssh_client.connect(hostname=self.hostname,
+                                        username=self.username,
+                                        password=self.password)
+
             conn = httplib.HTTPConnection(self.hostname, CRIUGUI_PORT)
             conn.request("GET", "/cgtree")
 
             resp = conn.getresponse().read()
             self.cgtree = json.loads(resp.decode("utf-8"))
         except EnvironmentError as e:
+            self.ssh_client = None
             self.error_text = "%s: %s" % (self.hostname, e.strerror)
         except Exception as e:
+            self.ssh_client = None
             self.error_text = "%s: %s" % (self.hostname, str(e))
