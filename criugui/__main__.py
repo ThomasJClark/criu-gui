@@ -18,13 +18,29 @@
 import threading
 from gi.repository import Gtk, GObject, GLib
 from criugui.view.machineview import MachineView
+from criugui.view.addmachinedialog import AddMachineDialog
 from criugui.machine import Machine
 
-machineviews = [
-    MachineView(Machine("localhost")),
-    MachineView(Machine("127.0.0.1")),
-    MachineView(Machine("0.0.0.0")),
-]
+win = Gtk.Window()
+machinebox = Gtk.HBox()
+
+
+def add_machine(*_):
+    def add_machine_done(dialog, response):
+        if response == Gtk.ResponseType.OK:
+            machine = Machine(dialog.entry.get_text())
+            view = MachineView(machine)
+
+            machinebox.pack_start(view, True, True, 0)
+            machinebox.show_all()
+
+            refresh_machines()
+
+        dialog.destroy()
+
+    amv = AddMachineDialog(win)
+    amv.connect("response", add_machine_done)
+    amv.run()
 
 
 def refresh_machines(*_):
@@ -34,10 +50,11 @@ def refresh_machines(*_):
         view.machine.refresh()
         GLib.idle_add(view.update)
 
-    for view in machineviews:
-        thread = threading.Thread(target=refresh_machine_view, kwargs={"view": view})
-        thread.daemon = True
-        thread.start()
+    for view in machinebox.get_children():
+        if isinstance(view, MachineView):
+            thread = threading.Thread(target=refresh_machine_view, kwargs={"view": view})
+            thread.daemon = True
+            thread.start()
 
 
 def main():
@@ -50,6 +67,7 @@ def main():
     headerbar.set_show_close_button(True)
 
     addbutton = Gtk.Button.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON)
+    addbutton.connect("clicked", add_machine)
     headerbar.pack_start(addbutton)
 
     refreshbutton = Gtk.Button.new_from_icon_name("view-refresh-symbolic", Gtk.IconSize.BUTTON)
@@ -59,16 +77,11 @@ def main():
     searchbutton = Gtk.Button.new_from_icon_name("system-search-symbolic", Gtk.IconSize.BUTTON)
     headerbar.pack_start(searchbutton)
 
-    box = Gtk.HBox()
-    for view in machineviews:
-        box.pack_start(view, True, True, 0)
-
-    win = Gtk.Window()
     win.connect("delete-event", Gtk.main_quit)
     win.set_icon_name("utilities-system-monitor")
     win.set_titlebar(headerbar)
     win.set_default_size(1000, 800)
-    win.add(box)
+    win.add(machinebox)
     win.show_all()
     Gtk.main()
 
