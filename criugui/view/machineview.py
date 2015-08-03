@@ -59,10 +59,15 @@ class MachineView(Gtk.Notebook):
             def close_infobar(infobar, response):
                 infobar.destroy()
 
-            infobar = Gtk.InfoBar(message_type=Gtk.MessageType.ERROR, show_close_button=True)
-            infobar.connect("response", close_infobar)
-            infobar.get_content_area().add(Gtk.Label(self.machine.error_text))
-            self.grid.attach(infobar, 0, 1, 1, 1)
+            infobar = self.grid.get_child_at(0, 1)
+
+            if infobar is None:
+                infobar = Gtk.InfoBar(message_type=Gtk.MessageType.ERROR, show_close_button=True)
+                infobar.get_content_area().add(Gtk.Label())
+                infobar.connect("response", close_infobar)
+                self.grid.attach(infobar, 0, 1, 1, 1)
+
+            infobar.get_content_area().get_children()[0].set_text(self.machine.error_text)
 
         self.treeview.cgtree = self.machine.cgtree
         self.treeview.update()
