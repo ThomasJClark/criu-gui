@@ -45,7 +45,7 @@ class CGTree:
             given path.
         """
 
-        # Get a proccess tree that includes all processes in this control group from the remote
+        # Get a process tree that includes all processes in this control group from the remote
         # machine.  The file "cgroup.procs" has a list of PIDS, so we can just look up all of those
         # processes and unflatten them into a tree.
         with self.sftp_client.file(os.path.join(path, "cgroup.procs")) as pids:
