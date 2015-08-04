@@ -38,7 +38,7 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
         self.box = Gtk.HBox(homogeneous=True)
         self.add(
             Gtk.Label(
-                "<b>You don't have any machines added.</b>\n" +
+                "<b>You haven't added any machines yet.</b>\n" +
                 "Click the \"+\" button to add one.",
                 use_markup=True,
                 justify=Gtk.Justification.CENTER))
