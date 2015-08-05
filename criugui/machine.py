@@ -15,11 +15,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-try:
-    import httplib
-except ImportError:
-    import http.client as httplib  # For Python 3 compatibility
-
 import json
 import paramiko
 from criugui.remote.cgtree import CGTree
@@ -44,14 +39,7 @@ class Machine:
 
         machines[self.hostname] = self
 
-    def refresh(self):
-        """
-            Make an HTTP request to the machine to retreive the latest control group and process
-            data.  This method blocks while it waits for a response, so it should not be called
-            from the main GUI thread.
-        """
-
-        self.error_text = None
+    def __connect(self):
 
         try:
             if self.ssh_client is None:
@@ -60,15 +48,26 @@ class Machine:
                 self.ssh_client.connect(hostname=self.hostname,
                                         username=self.username,
                                         password=self.password)
-
-            with self.ssh_client.open_sftp() as sftp_client:
-                self.cgtree = CGTree(sftp_client).tree
+            self.error_text = None
+            return True
         except EnvironmentError as e:
             self.ssh_client = None
             self.error_text = "%s: %s" % (self.hostname, e.strerror)
         except Exception as e:
             self.ssh_client = None
             self.error_text = "%s: %s" % (self.hostname, str(e))
+
+        return False
+
+    def refresh(self):
+        """
+            Retreive the latest control group and process data from the machine using an SSH
+            connection. This method blocks while it waits for a response, so it should not be
+            called from the main GUI thread.
+        """
+        if self.__connect():
+            with self.ssh_client.open_sftp() as sftp_client:
+                self.cgtree = CGTree(sftp_client).tree
 
     def get_cgtree(self):
         """
