@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from gi.repository import Gtk, GLib, Gdk
+from gi.repository import Gtk, GLib, Gdk, GObject
 from criugui.view.cgtreeview import CGTreeView
 from criugui.machine import machines, MachineException
 import json
@@ -29,11 +29,14 @@ class MachineView(Gtk.Notebook):
         hostname, and a few other widgets for scrollbars and such.
     """
 
+    __gsignals__ = {
+        "error-message": (GObject.SIGNAL_RUN_FIRST, None, (str,))
+    }
+
     def __init__(self, machine):
         Gtk.Notebook.__init__(self)
 
         self.machine = machine
-        self.error_message = None
 
         self.label = Gtk.Label()
         self.treeview = CGTreeView()
@@ -116,30 +119,6 @@ class MachineView(Gtk.Notebook):
         print("TODO: kill [%s@%s %s (%s)]" % (self.machine.username, self.machine.hostname, name,
                                               pid))
 
-    def __show_error_message(self):
-        """
-            Show an error message in an infobar at the bottom of the MachineView, including the
-            text self.error_message.
-        """
-
-        def on_infobar_response(infobar, response):
-            if response == Gtk.ResponseType.CLOSE:
-                infobar.destroy()
-            elif response == Gtk.ResponseType.REJECT:
-                self.remove_machine()
-
-        infobar = self.grid.get_child_at(0, 1)
-
-        if infobar is None:
-            infobar = Gtk.InfoBar(message_type=Gtk.MessageType.ERROR, show_close_button=True)
-            infobar.add_button("Remove", Gtk.ResponseType.REJECT)
-            infobar.get_content_area().add(Gtk.Label())
-            infobar.connect("response", on_infobar_response)
-            self.grid.attach(infobar, 0, 1, 1, 1)
-
-        infobar.get_content_area().get_children()[0].set_text(self.error_message)
-        self.show_all()
-
     def remove_machine(self, *_):
         """Remove this machine from the list of connected machines and close the SSH connection."""
 
@@ -167,8 +146,7 @@ class MachineView(Gtk.Notebook):
             GLib.idle_add(before_refresh)
             self.machine.refresh()
         except MachineException as e:
-            self.error_message = str(e)
-            GLib.idle_add(self.__show_error_message)
+            self.emit("error-message", str(e))
         finally:
             GLib.idle_add(after_refresh)
 
@@ -190,9 +168,7 @@ class MachineView(Gtk.Notebook):
             target_machine.migrate(self.machine, pid)
             self.machine.refresh()
         except MachineException as e:
-            print(e)
-            self.error_message = str(e)
-            GLib.idle_add(self.__show_error_message)
+            self.emit("error-message", str(e))
         finally:
             GLib.idle_add(after_migrate)
 

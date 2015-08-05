@@ -35,7 +35,18 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
                                        default_width=1000,
                                        default_height=800)
 
-        self.box = Gtk.HBox(homogeneous=True)
+        self.hbox = Gtk.HBox(homogeneous=True)
+
+        self.infobar_label = Gtk.Label()
+
+        self.infobar = Gtk.InfoBar(message_type=Gtk.MessageType.ERROR, show_close_button=True)
+        self.infobar.get_content_area().add(self.infobar_label)
+        self.infobar.connect("response", self.__hide_infobar)
+
+        self.vbox = Gtk.VBox()
+        self.vbox.pack_start(self.hbox, True, True, 0)
+        self.vbox.pack_start(self.infobar, False, True, 0)
+
         self.add(
             Gtk.Label(
                 "<b>You haven't added any machines yet.</b>\n" +
@@ -70,18 +81,22 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
 
         def add_machine_done(dialog, response):
             if response == Gtk.ResponseType.OK:
+                # If the window still has the "no machines added" label, remove it and add the
+                # main container box.
+                if self.get_child() != self.vbox:
+                    self.remove(self.get_child())
+                    self.add(self.vbox)
+
                 machine = Machine(dialog.get_hostname(),
                                   dialog.get_username(),
                                   dialog.get_password())
 
-                # If the window still has the "no machines added" label, remove it and add the
-                # main container box.
-                if self.get_child() != self.box:
-                    self.remove(self.get_child())
-                    self.add(self.box)
+                machineview = MachineView(machine)
+                machineview.connect("error-message", self.__show_infobar)
 
-                self.box.pack_start(MachineView(machine), True, True, 0)
-                self.box.show_all()
+                self.hbox.pack_start(machineview, True, True, 0)
+                self.vbox.show()
+                self.hbox.show_all()
 
                 self.refresh_machines()
 
@@ -94,8 +109,15 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
     def refresh_machines(self, *_):
         """Reload each Machine in a new thread, then update the views."""
 
-        for view in self.box.get_children():
+        for view in self.hbox.get_children():
             if isinstance(view, MachineView):
                 thread = threading.Thread(target=view.refresh)
                 thread.daemon = True
                 thread.start()
+
+    def __show_infobar(self, widget, text):
+        self.infobar_label.set_text(text)
+        self.infobar.show_all()
+
+    def __hide_infobar(self, widget, response):
+        self.infobar.hide()
