@@ -18,6 +18,7 @@
 import json
 import paramiko
 from criugui.remote.cgtree import CGTree
+from criugui.remote.migrate import Migrate
 
 machines = {}
 
@@ -49,15 +50,12 @@ class Machine:
                                         username=self.username,
                                         password=self.password)
             self.error_text = None
-            return True
         except EnvironmentError as e:
             self.ssh_client = None
-            self.error_text = "%s: %s" % (self.hostname, e.strerror)
+            raise Exception("%s: %s" % (self.hostname, e.strerror))
         except Exception as e:
             self.ssh_client = None
-            self.error_text = "%s: %s" % (self.hostname, str(e))
-
-        return False
+            raise Exception("%s: %s" % (self.hostname, str(e)))
 
     def refresh(self):
         """
@@ -65,9 +63,9 @@ class Machine:
             connection. This method blocks while it waits for a response, so it should not be
             called from the main GUI thread.
         """
-        if self.__connect():
-            with self.ssh_client.open_sftp() as sftp_client:
-                self.cgtree = CGTree(sftp_client).tree
+        self.__connect()
+        with self.ssh_client.open_sftp() as sftp_client:
+            self.cgtree = CGTree(sftp_client).tree
 
     def get_cgtree(self):
         """

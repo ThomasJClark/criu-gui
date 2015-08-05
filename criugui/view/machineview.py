@@ -32,6 +32,7 @@ class MachineView(Gtk.Notebook):
         Gtk.Notebook.__init__(self)
 
         self.machine = machine
+        self.error_message = None
 
         self.label = Gtk.Label()
         self.treeview = CGTreeView()
@@ -100,6 +101,7 @@ class MachineView(Gtk.Notebook):
         print("TODO: migrate [%s@%s %s (%s)] to [%s@%s]" % (machine.username, machine.hostname,
                                                             name, pid, self.machine.username,
                                                             self.machine.hostname))
+        # machine.migrate(self.machine, pid)
 
     def __delete_dragged_process(self, widget, context):
         """
@@ -113,6 +115,29 @@ class MachineView(Gtk.Notebook):
 
         print("TODO: kill [%s@%s %s (%s)]" % (self.machine.username, self.machine.hostname, name,
                                               pid))
+
+    def __show_error_message(self):
+        """
+            Show an error message in an infobar at the bottom of the MachineView, including the
+            text self.error_message.
+        """
+
+        def on_infobar_response(infobar, response):
+            if response == Gtk.ResponseType.CLOSE:
+                infobar.destroy()
+            elif response == Gtk.ResponseType.REJECT:
+                self.remove_machine()
+
+        infobar = self.grid.get_child_at(0, 1)
+
+        if infobar is None:
+            infobar = Gtk.InfoBar(message_type=Gtk.MessageType.ERROR, show_close_button=True)
+            infobar.add_button("Remove", Gtk.ResponseType.REJECT)
+            infobar.get_content_area().add(Gtk.Label())
+            infobar.connect("response", on_infobar_response)
+            self.grid.attach(infobar, 0, 1, 1, 1)
+
+        infobar.get_content_area().get_children()[0].set_text(self.error_message)
 
     def remove_machine(self, *_):
         """Remove this machine from the list of connected machines and close the SSH connection."""
@@ -137,35 +162,19 @@ class MachineView(Gtk.Notebook):
             self.treeview.set_property("sensitive", True)
             self.update()
 
-        GLib.idle_add(before_refresh)
-        self.machine.refresh()
-        GLib.idle_add(after_refresh)
+        try:
+            GLib.idle_add(before_refresh)
+            self.machine.refresh()
+        except Exception as e:
+            self.error_message = str(e)
+            GLib.idle_add(self.__show_error_message)
+        finally:
+            GLib.idle_add(after_refresh)
 
     def update(self):
         """Update the view with the latest data in self.machine."""
 
         self.label.set_markup("<b>%s</b>" % GLib.markup_escape_text(self.machine.hostname))
-
-        # If an error occured while loading the process data, add an infobar containing the error
-        # message.
-        if self.machine.error_text:
-            def on_infobar_response(infobar, response):
-                if response == Gtk.ResponseType.CLOSE:
-                    infobar.destroy()
-                elif response == Gtk.ResponseType.REJECT:
-                    self.remove_machine()
-
-            infobar = self.grid.get_child_at(0, 1)
-
-            if infobar is None:
-                infobar = Gtk.InfoBar(message_type=Gtk.MessageType.ERROR, show_close_button=True)
-                infobar.add_button("Remove", Gtk.ResponseType.REJECT)
-                infobar.get_content_area().add(Gtk.Label())
-                infobar.connect("response", on_infobar_response)
-                self.grid.attach(infobar, 0, 1, 1, 1)
-
-            infobar.get_content_area().get_children()[0].set_text(self.machine.error_text)
-
         self.treeview.cgtree = self.machine.get_cgtree()
         self.treeview.update()
         self.show_all()
