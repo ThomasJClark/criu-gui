@@ -15,8 +15,10 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Gdk
 from criugui.view.cgtreeview import CGTreeView
+from criugui.machine import machines
+import json
 
 
 class MachineView(Gtk.Notebook):
@@ -54,7 +56,60 @@ class MachineView(Gtk.Notebook):
         self.grid.attach(sep, 1, 0, 1, 2)
         self.append_page(self.grid, header)
 
+        # Set up drag & drop methods and signals.  Drag & drop is used with MachineView to allow
+        # to drag and drop processes from one machine to another, initiating a process migration.
+        target_entry = Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 1)
+        drag_actions = Gdk.DragAction.MOVE | Gdk.DragAction.COPY
+
+        # Processes and control groups can be dragged from the TreeView.
+        self.treeview.connect("drag-data-get", self.__get_dragged_process)
+        self.treeview.connect("drag-data-delete", self.__delete_dragged_process)
+        self.treeview.enable_model_drag_source(
+            Gdk.ModifierType.BUTTON1_MASK, [target_entry], drag_actions)
+
+        # Processes and control groups to be dropped anywhere on a MachineView.  This begins the
+        # series of steps to migrate the process to this machine.
+        self.connect("drag-data-received", self.__receive_dragged_process)
+        self.drag_dest_set(Gtk.DestDefaults.ALL, [target_entry], drag_actions)
+
         self.update()
+
+    def __get_dragged_process(self, widget, context, selection_data, info, time):
+        """
+            Store the information about the dragged process into selection_data so it can be
+            migrated.
+        """
+
+        model, iter = widget.get_selection().get_selected()
+        name, pid = model.get(iter, CGTreeView.NAME_COL, CGTreeView.PID_COL)
+        data = {"hostname": self.machine.hostname, "name": name, "pid": pid}
+
+        selection_data.set_text(json.dumps(data), -1)
+
+    def __receive_dragged_process(self, widget, context, x, y, selection_data, info, time):
+        """Dump the selection data and perform the migration."""
+
+        data = json.loads(selection_data.get_text())
+        machine = machines[data["hostname"]]
+        name = data["name"]
+        pid = data["pid"]
+
+        print("TODO: migrate [%s@%s %s (%s)] to [%s@%s]" % (machine.username, machine.hostname,
+                                                            name, pid, self.machine.username,
+                                                            self.machine.hostname))
+
+    def __delete_dragged_process(self, widget, context):
+        """
+            Kill the process on this machine.  This is called after a successful MOVE DragAction,
+            while a COPY DragAction results in a migration occuring without killing the original
+            process.
+        """
+
+        model, iter = widget.get_selection().get_selected()
+        name, pid = model.get(iter, CGTreeView.NAME_COL, CGTreeView.PID_COL)
+
+        print("TODO: kill [%s@%s %s (%s)]" % (self.machine.username, self.machine.hostname, name,
+                                              pid))
 
     def remove_machine(self, *_):
         """Remove this machine from the list of connected machines and close the SSH connection."""

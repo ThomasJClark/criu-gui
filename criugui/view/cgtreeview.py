@@ -15,8 +15,9 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 from gi.repository import Pango
+import json
 
 
 class CGTreeView(Gtk.TreeView):
@@ -26,6 +27,10 @@ class CGTreeView(Gtk.TreeView):
         systemd-cgls command.
     """
 
+    PROC_TYPE = Gdk.Atom.intern("process", False)
+
+    NAME_COL, PID_COL, WEIGHT_COL = range(3)
+
     def __init__(self):
         Gtk.TreeView.__init__(self, Gtk.TreeStore(str, str, Pango.Weight))
 
@@ -33,15 +38,15 @@ class CGTreeView(Gtk.TreeView):
 
         text = Gtk.CellRendererText()
 
-        namecol = Gtk.TreeViewColumn("Name", text, text=0)
+        namecol = Gtk.TreeViewColumn("Name", text, text=self.NAME_COL)
         namecol.set_fixed_width(200)
         namecol.set_resizable(True)
         self.append_column(namecol)
 
-        pidcol = Gtk.TreeViewColumn("PID", text, text=1, weight=2)
+        pidcol = Gtk.TreeViewColumn("PID", text, text=self.PID_COL, weight=self.WEIGHT_COL)
         self.append_column(pidcol)
 
-        self.set_search_column(0)
+        self.set_search_column(self.NAME_COL)
 
     def update(self):
         """

@@ -24,7 +24,7 @@ import json
 import paramiko
 from criugui.remote.cgtree import CGTree
 
-CRIUGUI_PORT = 8080
+machines = {}
 
 
 class Machine:
@@ -41,6 +41,8 @@ class Machine:
         self.ssh_client = None
         self.cgtree = None
         self.error_text = None
+
+        machines[self.hostname] = self
 
     def refresh(self):
         """
