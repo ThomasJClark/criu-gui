@@ -17,8 +17,9 @@
 
 from gi.repository import Gtk, GLib, Gdk
 from criugui.view.cgtreeview import CGTreeView
-from criugui.machine import machines
+from criugui.machine import machines, MachineException
 import json
+import threading
 
 
 class MachineView(Gtk.Notebook):
@@ -98,10 +99,9 @@ class MachineView(Gtk.Notebook):
         name = data["name"]
         pid = data["pid"]
 
-        print("TODO: migrate [%s@%s %s (%s)] to [%s@%s]" % (machine.username, machine.hostname,
-                                                            name, pid, self.machine.username,
-                                                            self.machine.hostname))
-        # machine.migrate(self.machine, pid)
+        thread = threading.Thread(target=self.migrate, args=(machine, pid))
+        thread.daemon = True
+        thread.start()
 
     def __delete_dragged_process(self, widget, context):
         """
@@ -138,6 +138,7 @@ class MachineView(Gtk.Notebook):
             self.grid.attach(infobar, 0, 1, 1, 1)
 
         infobar.get_content_area().get_children()[0].set_text(self.error_message)
+        self.show_all()
 
     def remove_machine(self, *_):
         """Remove this machine from the list of connected machines and close the SSH connection."""
@@ -165,11 +166,35 @@ class MachineView(Gtk.Notebook):
         try:
             GLib.idle_add(before_refresh)
             self.machine.refresh()
-        except Exception as e:
+        except MachineException as e:
             self.error_message = str(e)
             GLib.idle_add(self.__show_error_message)
         finally:
             GLib.idle_add(after_refresh)
+
+    def migrate(self, target_machine, pid):
+        """
+            Call the appropriate methods to try to migrate the machine associated with this view,
+            then update the view with the results.
+        """
+
+        def before_migrate():
+            self.spinner.start()
+
+        def after_migrate():
+            self.spinner.stop()
+            self.update()
+
+        try:
+            GLib.idle_add(before_migrate)
+            target_machine.migrate(self.machine, pid)
+            self.machine.refresh()
+        except MachineException as e:
+            print(e)
+            self.error_message = str(e)
+            GLib.idle_add(self.__show_error_message)
+        finally:
+            GLib.idle_add(after_migrate)
 
     def update(self):
         """Update the view with the latest data in self.machine."""

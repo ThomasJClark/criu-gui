@@ -18,9 +18,13 @@
 import json
 import paramiko
 from criugui.remote.cgtree import CGTree
-from criugui.remote.migrate import Migrate
+from criugui.remote.migrate import migrate
 
 machines = {}
+
+
+class MachineException(Exception):
+    pass
 
 
 class Machine:
@@ -52,10 +56,10 @@ class Machine:
             self.error_text = None
         except EnvironmentError as e:
             self.ssh_client = None
-            raise Exception("%s: %s" % (self.hostname, e.strerror))
+            raise MachineException("%s: %s" % (self.hostname, e.strerror))
         except Exception as e:
             self.ssh_client = None
-            raise Exception("%s: %s" % (self.hostname, str(e)))
+            raise MachineException("%s: %s" % (self.hostname, str(e)))
 
     def refresh(self):
         """
@@ -66,6 +70,19 @@ class Machine:
         self.__connect()
         with self.ssh_client.open_sftp() as sftp_client:
             self.cgtree = CGTree(sftp_client).tree
+
+    def migrate(self, target, pid):
+        """
+            Attempt to migrate a process from this machine to another.  This blocks, so it
+            shouldn't be called from the main thread.
+        """
+        self.__connect()
+        target.__connect()
+
+        stderr = migrate(self.ssh_client, target.ssh_client, pid)
+
+        if stderr:
+            raise MachineException(stderr)
 
     def get_cgtree(self):
         """
