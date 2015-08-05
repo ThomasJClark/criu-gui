@@ -94,12 +94,8 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
     def refresh_machines(self, *_):
         """Reload each Machine in a new thread, then update the views."""
 
-        def refresh_machine_view(view):
-            view.machine.refresh()
-            GLib.idle_add(view.update)
-
         for view in self.box.get_children():
             if isinstance(view, MachineView):
-                thread = threading.Thread(target=refresh_machine_view, kwargs={"view": view})
+                thread = threading.Thread(target=view.refresh)
                 thread.daemon = True
                 thread.start()

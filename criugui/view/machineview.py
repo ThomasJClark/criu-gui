@@ -43,10 +43,13 @@ class MachineView(Gtk.Notebook):
         sep = Gtk.Separator()
         sep.set_orientation(Gtk.Orientation.VERTICAL)
 
+        self.spinner = Gtk.Spinner()
+
         closebutton = Gtk.Button.new_from_icon_name("window-close-symbolic", Gtk.IconSize.BUTTON)
         closebutton.connect("clicked", self.remove_machine)
 
         header = Gtk.HBox()
+        header.pack_start(self.spinner, True, False, 5)
         header.pack_start(self.label, True, True, 0)
         header.pack_start(closebutton, True, False, 5)
         header.show_all()
@@ -118,6 +121,25 @@ class MachineView(Gtk.Notebook):
             self.machine.ssh_client.close()
 
         self.destroy()
+
+    def refresh(self):
+        """
+            Reload the data in self.machine and update the view when it arrives.  This blocks, so
+            it isn't called from the main GUI thread.
+        """
+
+        def before_refresh():
+            self.spinner.start()
+            self.treeview.set_property("sensitive", False)
+
+        def after_refresh():
+            self.spinner.stop()
+            self.treeview.set_property("sensitive", True)
+            self.update()
+
+        GLib.idle_add(before_refresh)
+        self.machine.refresh()
+        GLib.idle_add(after_refresh)
 
     def update(self):
         """Update the view with the latest data in self.machine."""
