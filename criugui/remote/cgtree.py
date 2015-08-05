@@ -64,13 +64,18 @@ class CGTree:
     def __parse_proc(self, pid):
         """Read a "/proc/.../stat" file and return a dictionary of the important properties."""
 
-        with self.sftp_client.file(os.path.join("/proc", pid, "stat")) as stat:
-                line = stat.readline()
-                a, b = line.find("("), line.rfind(")")
-                name = line[a + 1:b]
-                ppid = line[b + 2:].split(" ")[1]
+        try:
+            with self.sftp_client.file(os.path.join("/proc", pid, "stat")) as stat:
+                    line = stat.readline()
+                    a, b = line.find("("), line.rfind(")")
+                    name = line[a + 1:b]
+                    ppid = line[b + 2:].split(" ")[1]
 
-        return {"name": name, "pid": pid, "ppid": ppid, "children": []}
+            return {"name": name, "pid": pid, "ppid": ppid, "children": []}
+        except IOError:
+            # It's possible for the process to terminate in the middle of us building up the tree.
+            # In that case, ignore it - it isn't running anyway.
+            pass
 
     def __unflatten_procs(self, procs):
         """
@@ -81,14 +86,14 @@ class CGTree:
 
         for proc in procs:
             for proc2 in procs:
-                if "ppid" in proc and proc2["pid"] == proc["ppid"]:
+                if proc and proc2 and ("ppid" in proc) and (proc2["pid"] == proc["ppid"]):
                     proc2["children"].append(proc)
                     del proc["ppid"]
                     break
 
         newprocs = []
         for proc in procs:
-            if "ppid" in proc:
+            if proc and ("ppid" in proc):
                 del proc["ppid"]
                 newprocs.append(proc)
 
