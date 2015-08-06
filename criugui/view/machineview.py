@@ -72,11 +72,10 @@ class MachineView(Gtk.Notebook):
         # Set up drag & drop methods and signals.  Drag & drop is used with MachineView to allow
         # to drag and drop processes from one machine to another, initiating a process migration.
         target_entry = Gtk.TargetEntry.new("text/plain", Gtk.TargetFlags.SAME_APP, 1)
-        drag_actions = Gdk.DragAction.MOVE | Gdk.DragAction.COPY
+        drag_actions = Gdk.DragAction.COPY
 
         # Processes and control groups can be dragged from the TreeView.
         self.treeview.connect("drag-data-get", self.__get_dragged_process)
-        self.treeview.connect("drag-data-delete", self.__delete_dragged_process)
         self.treeview.enable_model_drag_source(
             Gdk.ModifierType.BUTTON1_MASK, [target_entry], drag_actions)
 
@@ -110,19 +109,6 @@ class MachineView(Gtk.Notebook):
         thread = threading.Thread(target=self.migrate, args=(machine, pid))
         thread.daemon = True
         thread.start()
-
-    def __delete_dragged_process(self, widget, context):
-        """
-            Kill the process on this machine.  This is called after a successful MOVE DragAction,
-            while a COPY DragAction results in a migration occuring without killing the original
-            process.
-        """
-
-        model, iter = widget.get_selection().get_selected()
-        name, pid = model.get(iter, CGTreeView.NAME_COL, CGTreeView.PID_COL)
-
-        print("TODO: kill [%s@%s %s (%s)]" % (self.machine.username, self.machine.hostname, name,
-                                              pid))
 
     def remove_machine(self, *_):
         """Remove this machine from the list of connected machines and close the SSH connection."""
