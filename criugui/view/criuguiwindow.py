@@ -38,8 +38,7 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
         self.hbox = Gtk.HBox(homogeneous=True)
 
         self.infobar_label = Gtk.Label()
-        self.infobar = Gtk.InfoBar(message_type=Gtk.MessageType.ERROR,
-                                   show_close_button=True)
+        self.infobar = Gtk.InfoBar(show_close_button=True)
         self.infobar.get_content_area().add(self.infobar_label)
         self.infobar.connect("response", self.__hide_infobar)
 
@@ -116,7 +115,7 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
                                   dialog.get_password())
 
                 machineview = MachineView(machine)
-                machineview.connect("error-message", self.__show_infobar)
+                machineview.connect("message", self.__show_infobar)
 
                 self.hbox.pack_start(machineview, True, True, 0)
                 self.vbox.show()
@@ -154,8 +153,9 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
             if isinstance(view, MachineView):
                 view.emit("search-changed", searchentry.get_text())
 
-    def __show_infobar(self, widget, text):
+    def __show_infobar(self, widget, text, messagetype):
         self.infobar_label.set_text(text)
+        self.infobar.set_message_type(messagetype)
         self.infobar.show_all()
 
     def __hide_infobar(self, widget, response):

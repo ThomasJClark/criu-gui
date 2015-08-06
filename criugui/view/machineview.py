@@ -30,7 +30,7 @@ class MachineView(Gtk.Notebook):
     """
 
     __gsignals__ = {
-        "error-message": (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+        "message": (GObject.SIGNAL_RUN_FIRST, None, (str, Gtk.MessageType)),
         "search-changed": (GObject.SIGNAL_RUN_FIRST, None, (str,)),
     }
 
@@ -137,7 +137,7 @@ class MachineView(Gtk.Notebook):
             GLib.idle_add(before_refresh)
             self.machine.refresh()
         except MachineException as e:
-            GLib.idle_add(self.emit, "error-message", str(e))
+            GLib.idle_add(self.emit, "message", str(e), Gtk.MessageType.ERROR)
         finally:
             GLib.idle_add(after_refresh)
 
@@ -158,8 +158,12 @@ class MachineView(Gtk.Notebook):
             GLib.idle_add(before_migrate)
             target_machine.migrate(self.machine, pid)
             self.machine.refresh()
+
+            message = "Successfully migrated PID %s from %s to %s" % (pid, target_machine.hostname,
+                                                                      self.machine.hostname)
+            GLib.idle_add(self.emit, "message", message, Gtk.MessageType.INFO)
         except MachineException as e:
-            GLib.idle_add(self.emit, "error-message", str(e))
+            GLib.idle_add(self.emit, "message", str(e), Gtk.MessageType.ERROR)
         finally:
             GLib.idle_add(after_migrate)
 
