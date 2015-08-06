@@ -137,7 +137,7 @@ class MachineView(Gtk.Notebook):
             GLib.idle_add(before_refresh)
             self.machine.refresh()
         except MachineException as e:
-            self.emit("error-message", str(e))
+            GLib.idle_add(self.emit, "error-message", str(e))
         finally:
             GLib.idle_add(after_refresh)
 
@@ -159,7 +159,7 @@ class MachineView(Gtk.Notebook):
             target_machine.migrate(self.machine, pid)
             self.machine.refresh()
         except MachineException as e:
-            self.emit("error-message", str(e))
+            GLib.idle_add(self.emit, "error-message", str(e))
         finally:
             GLib.idle_add(after_migrate)
 
