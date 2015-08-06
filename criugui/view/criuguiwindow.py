@@ -16,7 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import threading
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GObject
 from criugui.machine import Machine
 from criugui.view.machineview import MachineView
 from criugui.view.addmachinedialog import AddMachineDialog
@@ -38,12 +38,20 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
         self.hbox = Gtk.HBox(homogeneous=True)
 
         self.infobar_label = Gtk.Label()
-
-        self.infobar = Gtk.InfoBar(message_type=Gtk.MessageType.ERROR, show_close_button=True)
+        self.infobar = Gtk.InfoBar(message_type=Gtk.MessageType.ERROR,
+                                   show_close_button=True)
         self.infobar.get_content_area().add(self.infobar_label)
         self.infobar.connect("response", self.__hide_infobar)
 
+        self.searchentry = Gtk.SearchEntry()
+        self.searchentry.connect("search-changed", self.__set_search)
+
+        self.searchbar = Gtk.SearchBar(show_close_button=True)
+        self.searchbar.add(self.searchentry)
+        self.searchbar.show_all()
+
         self.vbox = Gtk.VBox()
+        self.vbox.pack_start(self.searchbar, False, True, 0)
         self.vbox.pack_start(self.hbox, True, True, 0)
         self.vbox.pack_start(self.infobar, False, True, 0)
 
@@ -59,33 +67,46 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
         headerbar.set_show_close_button(True)
         self.set_titlebar(headerbar)
 
-        addbutton = Gtk.Button.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON)
-        addbutton.connect("clicked", self.add_machine)
-        headerbar.pack_start(addbutton)
+        self.addbutton = Gtk.Button.new_from_icon_name("list-add-symbolic",
+                                                       Gtk.IconSize.BUTTON)
+        self.addbutton.connect("clicked", self.add_machine)
+        headerbar.pack_start(self.addbutton)
 
-        refreshbutton = Gtk.Button.new_from_icon_name("view-refresh-symbolic", Gtk.IconSize.BUTTON)
-        refreshbutton.connect("clicked", self.refresh_machines)
-        headerbar.pack_start(refreshbutton)
+        self.refreshbutton = Gtk.Button.new_from_icon_name(
+            "view-refresh-symbolic", Gtk.IconSize.BUTTON)
+        self.refreshbutton.set_sensitive(False)
+        self.refreshbutton.connect("clicked", self.refresh_machines)
+        headerbar.pack_start(self.refreshbutton)
 
-        searchbutton = Gtk.Button.new_from_icon_name("system-search-symbolic", Gtk.IconSize.BUTTON)
-        # search.button.connect("clicked", self.search TODO: search action
-        headerbar.pack_start(searchbutton)
+        self.searchbutton = Gtk.ToggleButton(image=Gtk.Image.new_from_icon_name(
+            "system-search-symbolic", Gtk.IconSize.BUTTON))
+        self.searchbutton.set_sensitive(False)
+        self.searchbutton.bind_property("active", self.searchbar, "search-mode-enabled",
+                                        GObject.BindingFlags.BIDIRECTIONAL)
+        headerbar.pack_start(self.searchbutton)
 
         self.connect("delete-event", Gtk.main_quit)
 
     def add_machine(self, *_):
         """
-            Show a dialog prompting for a new address, then connect to that machine and create a
-            view for it.
+            Show a dialog prompting for a new address, then connect to that machine and
+            create a view for it.
         """
 
         def add_machine_done(dialog, response):
             if response == Gtk.ResponseType.OK:
-                # If the window still has the "no machines added" label, remove it and add the
-                # main container box.
+                # If the window still has the "no machines added" label, remove it and
+                # add the main container box.
                 if self.get_child() != self.vbox:
                     self.remove(self.get_child())
                     self.add(self.vbox)
+
+                    # Also enable the widgets that should only be enabled after a machine
+                    # has been added.
+                    self.refreshbutton.set_sensitive(True)
+                    self.searchbutton.set_sensitive(True)
+                    self.connect(
+                        "key-press-event", lambda _, e: self.searchbar.handle_event(e))
 
                 machine = Machine(dialog.get_hostname(),
                                   dialog.get_username(),
@@ -96,9 +117,12 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
 
                 self.hbox.pack_start(machineview, True, True, 0)
                 self.vbox.show()
+                self.searchbar.show_all()
                 self.hbox.show_all()
 
-                # Refresh the machine as soon as it's added to get some initial data for it
+                # Refresh the machine as soon as it's added to get some initial data for
+                # it and set the search text.
+                machineview.emit("search-changed", self.searchentry.get_text())
                 thread = threading.Thread(target=machineview.refresh)
                 thread.daemon = True
                 thread.start()
@@ -117,6 +141,15 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
                 thread = threading.Thread(target=view.refresh)
                 thread.daemon = True
                 thread.start()
+
+    def __set_search(self, searchentry):
+        """
+            Set the filter for each of the machines to the text entered in the
+            SearchEntry widget.
+        """
+        for view in self.hbox.get_children():
+            if isinstance(view, MachineView):
+                view.emit("search-changed", searchentry.get_text())
 
     def __show_infobar(self, widget, text):
         self.infobar_label.set_text(text)

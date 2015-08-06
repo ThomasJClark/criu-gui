@@ -30,7 +30,8 @@ class MachineView(Gtk.Notebook):
     """
 
     __gsignals__ = {
-        "error-message": (GObject.SIGNAL_RUN_FIRST, None, (str,))
+        "error-message": (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+        "search-changed": (GObject.SIGNAL_RUN_FIRST, None, (str,)),
     }
 
     def __init__(self, machine):
@@ -63,6 +64,10 @@ class MachineView(Gtk.Notebook):
         self.grid.attach(scrolledwin, 0, 0, 1, 1)
         self.grid.attach(sep, 1, 0, 1, 2)
         self.append_page(self.grid, header)
+
+        # When the user enters a new search term, set a filter for the TreeView to only show rows
+        # matching that text.
+        self.connect("search-changed", self.treeview.set_filter_text)
 
         # Set up drag & drop methods and signals.  Drag & drop is used with MachineView to allow
         # to drag and drop processes from one machine to another, initiating a process migration.

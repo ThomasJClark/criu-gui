@@ -32,7 +32,14 @@ class CGTreeView(Gtk.TreeView):
     NAME_COL, PID_COL, WEIGHT_COL = range(3)
 
     def __init__(self):
-        Gtk.TreeView.__init__(self, Gtk.TreeStore(str, str, Pango.Weight))
+        self.treemodel = Gtk.TreeStore(str, str, Pango.Weight)
+        self.filtermodel = Gtk.TreeModelFilter(child_model=self.treemodel)
+        self.filtermodel.set_visible_func(self.__visible_func)
+
+        self.filtertext = ""
+
+        Gtk.TreeView.__init__(
+            self, model=self.filtermodel, enable_search=False, enable_tree_lines=True)
 
         self.cgtree = None
 
@@ -46,7 +53,10 @@ class CGTreeView(Gtk.TreeView):
         pidcol = Gtk.TreeViewColumn("PID", text, text=self.PID_COL, weight=self.WEIGHT_COL)
         self.append_column(pidcol)
 
-        self.set_search_column(self.NAME_COL)
+    def set_filter_text(self, widget, filtertext):
+        self.filtertext = filtertext
+        self.filtermodel.refilter()
+        self.expand_all()
 
     def update(self):
         """
@@ -56,7 +66,7 @@ class CGTreeView(Gtk.TreeView):
             cgroup.
         """
 
-        self.get_model().clear()
+        self.treemodel.clear()
         self.__append_cg_data(self.cgtree)
         self.expand_all()
 
@@ -72,6 +82,20 @@ class CGTreeView(Gtk.TreeView):
 
         # The array in data["children"] refers to the child processes or control group contents of
         # data.  Either way, recursively add all of the children under this row.
-        newparent = self.get_model().append(parent, row)
+        newparent = self.treemodel.append(parent, row)
         for child in data["children"]:
             self.__append_cg_data(child, newparent)
+
+    def __visible_func(self, model, iter, data):
+        """Return True if the given row or any of its children matches the current filter."""
+        child = model.iter_children(iter)
+        while child:
+            if self.__visible_func(model, child, data):
+                return True
+            child = model.iter_next(child)
+
+        name, = model.get(iter, CGTreeView.NAME_COL)
+
+        # This row "matches" if the filter text appears at all with some capitalization/whitespace
+        # in the process name.
+        return self.filtertext.lower().strip() in name.lower().strip()
