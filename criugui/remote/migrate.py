@@ -55,7 +55,7 @@ def get_stdout(ssh_client, cmd):
         output.
     """
     _, stdout, _ = ssh_client.exec_command(cmd)
-    return stdout.read().strip()
+    return stdout.read().decode("utf-8").strip()
 
 
 def get_stderr(ssh_client, cmd):
@@ -64,4 +64,4 @@ def get_stderr(ssh_client, cmd):
         error.
     """
     _, _, stderr = ssh_client.exec_command(cmd)
-    return stderr.read().strip()
+    return stderr.read().decode("utf-8").strip()
