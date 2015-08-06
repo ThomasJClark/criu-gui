@@ -63,7 +63,7 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
                 justify=Gtk.Justification.CENTER))
 
         headerbar = Gtk.HeaderBar()
-        headerbar.set_title("CRIUGUI")
+        headerbar.set_title("Process Migration")
         headerbar.set_show_close_button(True)
         self.set_titlebar(headerbar)
 
