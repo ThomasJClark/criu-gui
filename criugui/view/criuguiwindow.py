@@ -67,17 +67,20 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
         headerbar.set_show_close_button(True)
         self.set_titlebar(headerbar)
 
+        # Create a button to add a new machine
         self.addbutton = Gtk.Button.new_from_icon_name("list-add-symbolic",
                                                        Gtk.IconSize.BUTTON)
         self.addbutton.connect("clicked", self.add_machine)
         headerbar.pack_start(self.addbutton)
 
+        # Create a button to reload all of the process trees from each machine
         self.refreshbutton = Gtk.Button.new_from_icon_name(
             "view-refresh-symbolic", Gtk.IconSize.BUTTON)
         self.refreshbutton.set_sensitive(False)
         self.refreshbutton.connect("clicked", self.refresh_machines)
         headerbar.pack_start(self.refreshbutton)
 
+        # Create a toggle button to enable/disable the searchbar
         self.searchbutton = Gtk.ToggleButton(image=Gtk.Image.new_from_icon_name(
             "system-search-symbolic", Gtk.IconSize.BUTTON))
         self.searchbutton.set_sensitive(False)
