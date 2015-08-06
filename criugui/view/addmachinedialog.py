@@ -44,12 +44,10 @@ class AddMachineDialog(Gtk.Dialog):
         grid.attach(self.hostname_entry, 1, 0, 1, 1)
 
         self.username_entry = Gtk.Entry(hexpand=True)
-        self.username_entry.connect("changed", self.__input_changed)
         grid.attach(Gtk.Label("Username:"), 0, 1, 1, 1)
         grid.attach(self.username_entry, 1, 1, 1, 1)
 
         self.password_entry = Gtk.Entry(hexpand=True, visibility=False)
-        self.password_entry.connect("changed", self.__input_changed)
         grid.attach(Gtk.Label("Password:"), 0, 2, 1, 1)
         grid.attach(self.password_entry, 1, 2, 1, 1)
 
@@ -57,15 +55,14 @@ class AddMachineDialog(Gtk.Dialog):
         self.show_all()
 
     def __input_changed(self, *_):
-        # Only enable the OK button if the required input fields are filled out
-        self.set_response_sensitive(Gtk.ResponseType.OK,
-                                    self.get_hostname() and self.get_username())
+        # Only enable the OK button if the hostname is filled out
+        self.set_response_sensitive(Gtk.ResponseType.OK, self.get_hostname())
 
     def get_hostname(self):
         return self.hostname_entry.get_text()
 
     def get_username(self):
-        return self.username_entry.get_text()
+        return self.username_entry.get_text() or "root"
 
     def get_password(self):
         return self.password_entry.get_text()
