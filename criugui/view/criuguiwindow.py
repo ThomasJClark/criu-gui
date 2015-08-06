@@ -98,7 +98,10 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
                 self.vbox.show()
                 self.hbox.show_all()
 
-                self.refresh_machines()
+                # Refresh the machine as soon as it's added to get some initial data for it
+                thread = threading.Thread(target=machineview.refresh)
+                thread.daemon = True
+                thread.start()
 
             dialog.destroy()
 
