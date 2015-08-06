@@ -15,6 +15,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import os.path
+
 DUMP_CMD = "/usr/sbin/criu dump --leave-running --manage-cgroups -t %s -D %s"
 RESTORE_CMD = "/usr/sbin/criu restore --restore-detached --manage-cgroups -D %s"
 ARCHIVE_CMD = "tar czf %s %s"
@@ -31,22 +33,27 @@ def migrate(source_ssh, target_ssh, pid):
     temptar = get_stdout(source_ssh, "mktemp")
     tempdir = get_stdout(source_ssh, "mktemp -d")
 
-    # Dump the process on the source machine
-    stderr = get_stderr(source_ssh, DUMP_CMD % (pid, tempdir))
-    if "Error" in stderr:
-        return stderr
+    try:
+        # Dump the process on the source machine
+        stderr = get_stderr(source_ssh, DUMP_CMD % (pid, tempdir))
+        if "Error" in stderr:
+            return stderr
 
-    # Archive the images and copy them over to the target machine
-    get_stdout(source_ssh, ARCHIVE_CMD % (temptar, tempdir))
+        # Archive the images and copy them over to the target machine
+        get_stdout(source_ssh, ARCHIVE_CMD % (temptar, tempdir))
 
-    with source_ssh.open_sftp() as source_sftp, target_ssh.open_sftp() as target_sftp:
-        target_sftp.putfo(source_sftp.file(temptar), temptar, 0)
+        with source_ssh.open_sftp() as source_sftp, target_ssh.open_sftp() as target_sftp:
+            target_sftp.putfo(source_sftp.file(temptar), temptar, 0)
 
-    # Extract the archive and restore the process on the target machine
-    get_stdout(target_ssh, EXTRACT_CMD % temptar)
-    stderr = get_stderr(target_ssh, RESTORE_CMD % tempdir)
-    if "Error" in stderr:
-        return stderr
+        # Extract the archive and restore the process on the target machine
+        get_stdout(target_ssh, EXTRACT_CMD % temptar)
+        stderr = get_stderr(target_ssh, RESTORE_CMD % tempdir)
+        if "Error" in stderr:
+            return stderr
+    finally:
+        # Clean up the temporary files on both machines
+        get_stderr(source_ssh, "rm -rf %s %s" % (tempdir, temptar))
+        get_stderr(target_ssh, "rm -rf %s %s" % (tempdir, temptar))
 
 
 def get_stdout(ssh_client, cmd):
