@@ -73,7 +73,6 @@ class SetCommandsDialog(Gtk.Dialog):
         if response == Gtk.ResponseType.OK:
             criugui.remote.migrate.DUMP_CMD = self.get_checkpoint_command()
             criugui.remote.migrate.RESTORE_CMD = self.get_restore_command()
-            print("k")
 
         self.destroy()
 

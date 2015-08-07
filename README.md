@@ -26,11 +26,11 @@ reload the processes with the refresh button.  To search for a process by name, 
 To migrate a process, click and drag it from one machine to another.  You will be informed of the success
 or failure of the migration when it completes.
 
-## Limitations
+The command line options passed to CRIU default to basically `--leave-running --manage-cgroups` for dumping
+and `-restore-detached --manage-cgroups` for restoring.  To edit these, click the terminal button in the
+headerbar.
 
-CRIU is always passed the same command line arguments - `criu dump --leave-running --manage-cgroups` and
-`criu restore --restore-detached --manage-cgroups`.  It might be a good idea to make this configurable,
-since many processes will only dump/restore correctly by adding some arguments.
+## Limitations
 
 Shell jobs cannot be migrated.  If the `--shell-job` flag is specified, CRIU checks if stdin is actually
 a TTY, and returns an error if it's not.  I'm not sure if shell jobs can be migrated besides manually in
@@ -38,14 +38,15 @@ an interactive terminal.
 
 ## Screenshots
 
-![00](https://cloud.githubusercontent.com/assets/3964980/9137284/ac57c0e6-3cea-11e5-9ac0-9ed633d51057.png)
+![00](https://cloud.githubusercontent.com/assets/3964980/9142609/dd2aac0a-3d0e-11e5-97b1-6fd257175cec.png)
 
-![01](https://cloud.githubusercontent.com/assets/3964980/9137285/ac61282a-3cea-11e5-8c49-8564a2cf627f.png)
+![01](https://cloud.githubusercontent.com/assets/3964980/9142611/dd567c9a-3d0e-11e5-9c1d-81073815bf0e.png)
 
-![02](https://cloud.githubusercontent.com/assets/3964980/9137286/ac63f1f4-3cea-11e5-84c2-4ee0e0003acc.png)
+![02](https://cloud.githubusercontent.com/assets/3964980/9142612/dd5678c6-3d0e-11e5-9e3e-9f34c57386e6.png)
 
-![03](https://cloud.githubusercontent.com/assets/3964980/9137287/ac65259c-3cea-11e5-8150-ba8c55b63a7e.png)
+![03](https://cloud.githubusercontent.com/assets/3964980/9142610/dd551de6-3d0e-11e5-8faa-8a3b5bd7cc30.png)
 
-![04](https://cloud.githubusercontent.com/assets/3964980/9137289/ac65ec20-3cea-11e5-937a-fb63d41afcd9.png)
+![04](https://cloud.githubusercontent.com/assets/3964980/9142614/dd57c992-3d0e-11e5-8931-a65ae77405e8.png)
 
-![05](https://cloud.githubusercontent.com/assets/3964980/9137288/ac65a1f2-3cea-11e5-9aba-138eb201ef2f.png)
+![05](https://cloud.githubusercontent.com/assets/3964980/9142613/dd579846-3d0e-11e5-85c8-6f951421a662.png)
+
