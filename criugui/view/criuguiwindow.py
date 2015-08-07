@@ -20,6 +20,7 @@ from gi.repository import Gtk, GObject
 from criugui.machine import Machine
 from criugui.view.machineview import MachineView
 from criugui.view.addmachinedialog import AddMachineDialog
+from criugui.view.setcommandsdialog import SetCommandsDialog
 
 
 class CRIUGUIWindow(Gtk.ApplicationWindow):
@@ -72,6 +73,12 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
         self.addbutton.connect("clicked", self.add_machine)
         headerbar.pack_start(self.addbutton)
 
+        # Create a button to set the command line options for CRIU
+        self.commandlinebutton = Gtk.Button.new_from_icon_name("utilities-terminal-symbolic",
+                                                               Gtk.IconSize.BUTTON)
+        self.commandlinebutton.connect("clicked", self.set_commands)
+        headerbar.pack_start(self.commandlinebutton)
+
         # Create a button to reload all of the process trees from each machine
         self.refreshbutton = Gtk.Button.new_from_icon_name(
             "view-refresh-symbolic", Gtk.IconSize.BUTTON)
@@ -88,6 +95,9 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
         headerbar.pack_start(self.searchbutton)
 
         self.connect("delete-event", Gtk.main_quit)
+
+    def set_commands(self, *_):
+        SetCommandsDialog(self).run()
 
     def add_machine(self, *_):
         """
@@ -131,9 +141,9 @@ class CRIUGUIWindow(Gtk.ApplicationWindow):
 
             dialog.destroy()
 
-        amv = AddMachineDialog(self)
-        amv.connect("response", add_machine_done)
-        amv.run()
+        dialog = AddMachineDialog(self)
+        dialog.connect("response", add_machine_done)
+        dialog.run()
 
     def refresh_machines(self, *_):
         """Reload each Machine in a new thread, then update the views."""
